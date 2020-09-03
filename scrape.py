@@ -13,9 +13,6 @@ from bs4 import BeautifulSoup as soup
 
 GAMES_URL = "https://steamcommunity.com/id/{}/games?tab=all"
 
-STATS_BUTTON_TEXT = "View Stats"
-GAMEDATA_BUTTON_TEXT = "Personal Game Data"
-
 
 def is_achivement_url(url: str) -> bool:
     query = urlparse(url).query

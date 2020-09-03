@@ -5,7 +5,6 @@ from datetime import datetime
 from collections import Counter
 
 import click
-from logzero import logger
 from prettytable import PrettyTable
 
 tw = textwrap.TextWrapper(width=25, drop_whitespace=True, max_lines=2)
