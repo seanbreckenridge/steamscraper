@@ -14,6 +14,8 @@ Saves:
 
 To minimize pain and suffering resulting from webscrapings, `scrape.py` is as generic as possible when scraping, and saves the entire HTML contents of the pages. Then `extract.py` tries to parse that into the values I want.
 
+Primarily written to get historical achievement data, to plug into `my.games.steam` for [`HPI`](https://github.com/seanbreckenridge/HPI)
+
 ---
 
 Requires `python3.7+`
