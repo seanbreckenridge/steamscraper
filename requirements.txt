@@ -2,3 +2,5 @@ click
 selenium
 logzero
 bs4
+prettytable
+dateparser
