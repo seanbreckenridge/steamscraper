@@ -2,7 +2,7 @@
 
 Scrapes game/achievement data from steams website.
 
-Doesn't seem to be a simple way to download the data using the GDPR site, this is a thrown together `selenium` implementation. Assumes you have [`selenium`](https://selenium-python.readthedocs.io/installation.html) setup/a `chromedriver` binary on your `$PATH` somewhere.
+Doesn't seem to be a simple way to download the data using the [GDPR site](https://help.steampowered.com/en/accountdata), this is a thrown together `selenium` implementation. Assumes you have [`selenium`](https://selenium-python.readthedocs.io/installation.html) setup/a `chromedriver` binary on your `$PATH` somewhere.
 
 I'm not sure if some of these pages are paginated or not, I don't use steam that actively. It seems to be all of the data though.
 
