@@ -55,7 +55,7 @@ def _game_page_extract_row_attributes(bs4_el):
 
 def game_page(page_contents):
     """
-    Extracts name, hours and image from the
+    Extracts name, hours and image from the main game page
     """
     gsoup = bs4_parse(page_contents)
     games = {}
@@ -146,7 +146,7 @@ def achievement_page(url, page_contents):
             achievements.extend(list(_tf2_achievement_page(asoup)))
             logger.debug(f"Parsed {len(achievements)} achievements from TF2...")
         else:
-            logger.warning(f"Couldnt parse {url} parser...")
+            logger.warning(f"Couldnt parse {url}...")
     return game_id, achievements
 
 
