@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup as soup
 GAMES_URL = "https://steamcommunity.com/id/{}/games?tab=all"
 
 
-def is_achivement_url(url: str) -> bool:
+def is_achievement_url(url: str) -> bool:
     query = urlparse(url).query
     return "achievement" in query
 
@@ -38,8 +38,8 @@ def scrape_game_data(username, driver):
     for u in page_soup.find_all("a"):
         url = u["href"]
         if url.startswith("https://steamcommunity.com/id/{}/stats".format(username)):
-            # achivements
-            if is_achivement_url(url):
+            # achievements
+            if is_achievement_url(url):
                 achievement_urls.append(url)
 
     for u in achievement_urls:
