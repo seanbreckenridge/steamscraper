@@ -1,6 +1,7 @@
 import re
 import json
-from typing import Optional, Union
+from datetime import datetime
+from typing import Optional, Union, List
 
 import click
 import dateparser
@@ -11,16 +12,30 @@ from bs4 import BeautifulSoup as soup
 def bs4_parse(page_contents: str):
     return soup(page_contents, "html.parser")
 
+
+current_year = str(datetime.now().year)
+
+
 def _parse_unlocked_time(date_string: str) -> Union[int, str]:
-    match_data = re.match("Unlocked (\w+) (\d+), (\d+) @ (.*)$", date_string)
-    if bool(match_data.groups()):
-        match_string = " ".join(map(str.strip, [match_data.group(1), match_data.group(2), match_data.group(3), match_data.group(4)]))
-        dt = dateparser.parse(match_string)
-        if dt is not None:
-            return int(dt.timestamp())
-        else:
-            logger.warning("Could not parse datetime {}".format(date_string))
-            return date_string
+    # second pattern is if it was unlocked in the current year
+    for pattern in [
+        "Unlocked (\w+) (\d+), (\d+) @ (.*)$",
+        "Unlocked (\w+) (\d+) @ (.*)$",
+    ]:
+        match_data = re.match(pattern, date_string.strip())
+        if match_data is not None and bool(match_data.groups()):
+            dt_parts: List[str] = [match_data.group(n) for n in (1, 2, 3)]
+            if len(match_data.groups()) > 3:
+                dt_parts.append(match_data.group(4))
+            else:
+                # use current year if there was no year in the description
+                dt_parts.append(current_year)
+            match_string = " ".join(map(str.strip, dt_parts))
+            dt = dateparser.parse(match_string)
+            if dt is not None:
+                return int(dt.timestamp())
+    logger.warning("Could not parse datetime {}".format(date_string))
+    return date_string
 
 
 def _get_opt_img(el) -> Optional[str]:
@@ -177,7 +192,9 @@ def main(from_file: str, to_file: str):
         achievements[game_id] = achievement_data
 
     # merge meta/achievement data
-    logger.info("combining game/achievement info (ones that dont match probably dont have achievements)")
+    logger.info(
+        "combining game/achievement info (ones that dont match probably dont have achievements)"
+    )
     parsed_data = {}
     for game_id, metadata in metadata.items():
         parsed_data[game_id] = metadata
