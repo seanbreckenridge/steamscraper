@@ -150,7 +150,10 @@ def _tf2_achievement_page(asoup):
 def achievement_page(url, page_contents):
     achievements = []
     asoup = bs4_parse(page_contents)
-    game_id = int(asoup.find(class_="gameLogo").find("a")["href"].split("/")[-1])
+    gameLogo = asoup.find(class_="gameLogo")
+    if gameLogo is None:
+        return None, []
+    game_id = int(gameLogo.find("a")["href"].split("/")[-1])
     if asoup.find(attrs={"id": "personalAchieve"}) is not None:
         logger.debug(f"Parsing {url} with default achievement page parser...")
         achievements.extend(list(_default_achievement_page(asoup)))
@@ -189,7 +192,8 @@ def main(from_file: str, to_file: str):
     achievements = {}
     for ach_url, ach_page_contents in raw_data["ach"].items():
         game_id, achievement_data = achievement_page(ach_url, ach_page_contents)
-        achievements[game_id] = achievement_data
+        if game_id is not None and len(achievement_data) > 0:
+            achievements[game_id] = achievement_data
 
     # merge meta/achievement data
     logger.info(
@@ -208,8 +212,7 @@ def main(from_file: str, to_file: str):
         logger.warning(
             f"There are {len(achievements)} achievements left which dont match to game IDs!"
         )
-        logger.debug("Adding them to another top level key 'unmatched'")
-        parsed_data["unmatched"] = achievements
+        logger.warning(achievements)
 
     with open(to_file, "w") as tf:
         json.dump(parsed_data, tf)
