@@ -1,7 +1,7 @@
 import re
 import json
 from datetime import datetime
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict, Any
 
 import click
 import dateparser
@@ -92,7 +92,7 @@ def achievement_row_parser(
     Handles parsing an achievement row
     Works for both the default (95% of steam pages) and TF2 Custom HTML page
     """
-    data = {}
+    data: Dict[str, Any] = {}
     if img_el is None:
         data["icon"] = _get_opt_img(ach_row.find("img"))
     else:
@@ -147,7 +147,7 @@ def _tf2_achievement_page(asoup):
         )
 
 
-def achievement_page(url, page_contents):
+def achievement_page(url: str, page_contents: str):
     achievements = []
     asoup = bs4_parse(page_contents)
     gameLogo = asoup.find(class_="gameLogo")
