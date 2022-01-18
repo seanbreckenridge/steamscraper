@@ -1,16 +1,17 @@
 import re
 import json
 from datetime import datetime
-from typing import Optional, Union, List, Dict, Any
+from typing import Optional, Union, List, Dict, Any, cast, Tuple
 
 import click
 import dateparser
-from logzero import logger
-from bs4 import BeautifulSoup as soup
+import bs4  # type: ignore[import]
+from logzero import logger  # type: ignore[import]
 
+Json = Any
 
-def bs4_parse(page_contents: str):
-    return soup(page_contents, "html.parser")
+def bs4_parse(page_contents: str) -> bs4.BeautifulSoup:
+    return bs4.BeautifulSoup(page_contents, "html.parser")
 
 
 current_year = str(datetime.now().year)
@@ -38,11 +39,11 @@ def _parse_unlocked_time(date_string: str) -> Union[int, str]:
     return date_string
 
 
-def _get_opt_img(el) -> Optional[str]:
+def _get_opt_img(el: Optional[bs4.element.Tag]) -> Optional[str]:
     if el is None:
         return None
     else:
-        return el["src"]
+        return cast(str, el["src"])
 
 
 def _parse_game_id(game_id: str) -> int:
@@ -81,13 +82,13 @@ def game_page(page_contents):
 
 
 def achievement_row_parser(
-    ach_row,
+    ach_row: bs4.element.Tag,
     title_selector: str = "h3",
     description_selector: str = "h5",
-    unlock_selector="achieveUnlockTime",
-    progress_selector="progressText",
-    img_el=None,
-):
+    unlock_selector: str="achieveUnlockTime",
+    progress_selector: str="progressText",
+    img_el: Optional[str]=None,
+) -> Json:
     """
     Handles parsing an achievement row
     Works for both the default (95% of steam pages) and TF2 Custom HTML page
@@ -147,7 +148,7 @@ def _tf2_achievement_page(asoup):
         )
 
 
-def achievement_page(url: str, page_contents: str):
+def achievement_page(url: str, page_contents: str) -> Tuple[Optional[int], List[Json]]:
     achievements = []
     asoup = bs4_parse(page_contents)
     gameLogo = asoup.find(class_="gameLogo")
@@ -181,7 +182,7 @@ def achievement_page(url: str, page_contents: str):
     required=True,
     help="File to store parsed JSON to",
 )
-def main(from_file: str, to_file: str):
+def main(from_file: str, to_file: str) -> None:
     with open(from_file, "r") as fj:
         raw_data = json.load(fj)
 

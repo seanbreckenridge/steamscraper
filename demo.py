@@ -4,7 +4,7 @@ from datetime import datetime
 from collections import Counter
 
 import click
-from prettytable import PrettyTable
+from prettytable import PrettyTable  # type: ignore[import]
 
 tw = textwrap.TextWrapper(width=25, drop_whitespace=True, max_lines=2)
 
@@ -36,7 +36,7 @@ def most_achieved_in(ach):
     required=True,
     help="File that contains the HTML dumps",
 )
-def main(from_file: str):
+def main(from_file: str) -> None:
     with open(from_file, "r") as fj:
         parsed_data = json.load(fj)
 

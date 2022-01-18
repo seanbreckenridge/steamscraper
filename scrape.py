@@ -4,12 +4,12 @@ from typing import Optional
 from urllib.parse import urlparse
 
 import click
-from logzero import logger
-from selenium import webdriver
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from bs4 import BeautifulSoup as soup
+import bs4  # type: ignore[import]
+from logzero import logger  # type: ignore[import]
+from selenium import webdriver  # type: ignore[import]
+from selenium.webdriver.support import expected_conditions as EC  # type: ignore[import]
+from selenium.webdriver.common.by import By  # type: ignore[import]
+from selenium.webdriver.support.ui import WebDriverWait  # type: ignore[import]
 
 GAMES_URL = "https://steamcommunity.com/id/{}/games?tab=all"
 
@@ -31,7 +31,7 @@ def scrape_game_data(username, driver):
     page_data: str = driver.page_source
     data["main_page"] = page_data
     data["ach"] = {}
-    page_soup = soup(driver.page_source, "html.parser")
+    page_soup = bs4.BeautifulSoup(driver.page_source, "html.parser")
 
     achievement_urls = []
     # parse URLs for destination pages
@@ -84,7 +84,7 @@ def login(username, driver):
     required=False,
     help="Location of the chromedriver",
 )
-def main(steam_username: str, to_file: str, chromedriver_path: Optional[str]):
+def main(steam_username: str, to_file: str, chromedriver_path: Optional[str]) -> None:
     cpath = "chromedriver" if chromedriver_path is None else chromedriver_path
     driver = webdriver.Chrome(executable_path=cpath)
 
