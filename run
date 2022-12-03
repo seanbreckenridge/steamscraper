@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# personal-ish script to run this for me
+# uses the STEAM_USERNAME and HPIDATA envvars to grab username/save to my data directory
+
+set -e
+
+THIS_DIR="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
+cd "${THIS_DIR}" || exit $?
+
+python3 scrape.py "${STEAM_USERNAME:-$1}" --to-file ./data.json
+python3 parse.py --from-file ./data.json --to-file ./parsed.json
+TARGET="${HPIDATA:?No HPIDATA envvar set}/steam.json"
+mv -v ./parsed.json "${TARGET}"
