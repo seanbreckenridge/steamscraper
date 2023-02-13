@@ -10,6 +10,7 @@ from logzero import logger  # type: ignore[import]
 
 Json = Any
 
+
 def bs4_parse(page_contents: str) -> bs4.BeautifulSoup:
     return bs4.BeautifulSoup(page_contents, "html.parser")
 
@@ -85,9 +86,9 @@ def achievement_row_parser(
     ach_row: bs4.element.Tag,
     title_selector: str = "h3",
     description_selector: str = "h5",
-    unlock_selector: str="achieveUnlockTime",
-    progress_selector: str="progressText",
-    img_el: Optional[str]=None,
+    unlock_selector: str = "achieveUnlockTime",
+    progress_selector: str = "progressText",
+    img_el: Optional[str] = None,
 ) -> Json:
     """
     Handles parsing an achievement row

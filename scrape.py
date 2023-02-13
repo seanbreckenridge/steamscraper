@@ -20,7 +20,6 @@ def is_achievement_url(url: str) -> bool:
 
 
 def scrape_game_data(username, driver):
-
     driver.get(GAMES_URL.format(username))
     WebDriverWait(driver, 30).until(
         EC.presence_of_element_located((By.CLASS_NAME, "gameListRow"))
