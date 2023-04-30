@@ -1,7 +1,8 @@
 import re
 import json
 from datetime import datetime
-from typing import Optional, Union, List, Dict, Any, cast, Tuple
+from collections import defaultdict
+from typing import Optional, Union, List, Dict, Any, cast, Tuple, Mapping
 
 import click
 import dateparser
@@ -21,8 +22,8 @@ current_year = str(datetime.now().year)
 def _parse_unlocked_time(date_string: str) -> Union[int, str]:
     # second pattern is if it was unlocked in the current year
     for pattern in [
-        "Unlocked (\w+) (\d+), (\d+) @ (.*)$",
-        "Unlocked (\w+) (\d+) @ (.*)$",
+        r"Unlocked (\w+) (\d+), (\d+) @ (.*)$",
+        r"Unlocked (\w+) (\d+) @ (.*)$",
     ]:
         match_data = re.match(pattern, date_string.strip())
         if match_data is not None and bool(match_data.groups()):
@@ -47,10 +48,6 @@ def _get_opt_img(el: Optional[bs4.element.Tag]) -> Optional[str]:
         return cast(str, el["src"])
 
 
-def _parse_game_id(game_id: str) -> int:
-    return int(game_id.lstrip("game_"))
-
-
 def _parse_game_time(duration: str) -> float:
     if len(duration) == 0:
         return 0.0
@@ -58,10 +55,24 @@ def _parse_game_time(duration: str) -> float:
 
 
 def _game_page_extract_row_attributes(bs4_el):
-    game_id = _parse_game_id(bs4_el["id"])
-    game_name: str = bs4_el.find(class_="gameListRowItemName").text.strip()
-    game_hours_played: str = bs4_el.find(class_="hours_played").text.strip()
-    game_image = _get_opt_img(bs4_el.find(class_="gameListRowLogo").find("img"))
+    game_url_element = bs4_el.find("a", {"class": re.compile(r"_GameName.*")})
+    if game_url_element is None:
+        raise ValueError(f"Could not find game url element in {bs4_el}")
+    game_url = game_url_element["href"]
+    game_id = int(game_url.split("/")[-1])
+    game_name = game_url_element.text.strip()
+    game_time_element = bs4_el.find("span", {"class": re.compile(".*_Hours_.*")})
+    game_hours_played = "0"
+    if game_time_element is not None:
+        # remove 'TOTAL HOURS' tag from the element
+        game_time_element.find(
+            "span", {"class": re.compile(".*FactLabel.*")}
+        ).decompose()
+        # leaving just the time in the element
+        game_hours_played = game_time_element.text.strip()
+    else:
+        logger.warning(f"Could not find game time element in {bs4_el}")
+    game_image = _get_opt_img(bs4_el.find("img"))
     return game_id, {
         "id": game_id,
         "name": game_name,
@@ -70,13 +81,15 @@ def _game_page_extract_row_attributes(bs4_el):
     }
 
 
-def game_page(page_contents):
+def game_page(page_contents) -> Dict[int, Json]:
     """
     Extracts name, hours and image from the main game page
     """
     gsoup = bs4_parse(page_contents)
     games = {}
-    for el in gsoup.find_all(class_="gameListRow"):
+    for el in gsoup.find_all(
+        "div", {"class": re.compile(r"gameslistitems_GamesListItemContainer.*")}
+    ):
         game_id, game_data = _game_page_extract_row_attributes(el)
         games[game_id] = game_data
     return games
@@ -161,8 +174,8 @@ def achievement_page(url: str, page_contents: str) -> Tuple[Optional[int], List[
         achievements.extend(list(_default_achievement_page(asoup)))
         logger.debug(f"Parsed {len(achievements)} achievements...")
     else:
-        # try custom HTML parsers
-        if "/stats/TF2/" in url:
+        # try custom HTML parsers (just TF2 since its the only one I know of)
+        if "/stats/TF2" in url or "stats/440/?tab=achievements" in url:
             achievements.extend(list(_tf2_achievement_page(asoup)))
             logger.debug(f"Parsed {len(achievements)} achievements from TF2...")
         else:
@@ -177,33 +190,29 @@ def achievement_page(url: str, page_contents: str) -> Tuple[Optional[int], List[
     required=True,
     help="File that contains the HTML dumps",
 )
-@click.option(
-    "--to-file",
-    type=click.Path(),
-    required=True,
-    help="File to store parsed JSON to",
-)
-def main(from_file: str, to_file: str) -> None:
+def main(from_file: str) -> None:
     with open(from_file, "r") as fj:
         raw_data = json.load(fj)
 
     # get days played/images
-    metadata = game_page(raw_data["main_page"])
+    game_metadata: Dict[int, Json] = game_page(raw_data["main_page"])
 
     # get achievement data
-    achievements = {}
+    achievements: Dict[int, List[Json]] = {}
     for ach_url, ach_page_contents in raw_data["ach"].items():
         game_id, achievement_data = achievement_page(ach_url, ach_page_contents)
         if game_id is not None and len(achievement_data) > 0:
             achievements[game_id] = achievement_data
+        else:
+            logger.warning(f"Could not parse achievements from {ach_url}")
 
     # merge meta/achievement data
     logger.info(
         "combining game/achievement info (ones that dont match probably dont have achievements)"
     )
-    parsed_data = {}
-    for game_id, metadata in metadata.items():
-        parsed_data[game_id] = metadata
+    parsed_data: Mapping[int, Any] = defaultdict(dict)
+    for game_id in list(achievements.keys()):
+        parsed_data[game_id] = game_metadata.pop(game_id)
         if game_id in achievements:
             parsed_data[game_id]["achievements"] = achievements.pop(game_id)
         else:
@@ -216,8 +225,7 @@ def main(from_file: str, to_file: str) -> None:
         )
         logger.warning(achievements)
 
-    with open(to_file, "w") as tf:
-        json.dump(parsed_data, tf)
+    click.echo(json.dumps(parsed_data, indent=4))
 
 
 if __name__ == "__main__":

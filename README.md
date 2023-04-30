@@ -28,8 +28,8 @@ cd steamscraper
 pip install -r ./requirements.txt
 # username is the one that works here: https://steamcommunity.com/id/<steam_username>/games?tab=all
 python3 ./scrape.py <steam_username> --to-file ./data.json
-python3 ./parse.py --from-file ./data.json --to-file ./parsed.json
-python3 ./demo.py --from-file  ./parsed.json
+python3 ./parse.py --from-file ./data.json >./parsed.json
+python3 ./demo.py --from-file ./parsed.json
 ```
 
 ---

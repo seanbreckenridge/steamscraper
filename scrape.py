@@ -21,8 +21,9 @@ def is_achievement_url(url: str) -> bool:
 
 def scrape_game_data(username, driver):
     driver.get(GAMES_URL.format(username))
+    sleep(5)
     WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "gameListRow"))
+        EC.presence_of_element_located((By.CSS_SELECTOR, ".Panel.Focusable"))
     )
 
     data = {}
@@ -92,6 +93,7 @@ def main(steam_username: str, to_file: str, chromedriver_path: Optional[str]) ->
         game_data = scrape_game_data(steam_username, driver)
     except Exception as e:
         logger.exception(e)
+        return
     finally:
         driver.quit()
 
