@@ -14,6 +14,8 @@ Saves:
 
 Since 2FA is enabled on my account, this just asks you to manually log in after the chromedriver opens, it doesnt try to automatically log in. Prompts you to hit enter once you're logged in, which then starts the scraping process
 
+**Make sure you have steam closed while running this**, otherwise the HTML changes since it conects to the steam client.
+
 To minimize errors , `scrape.py` is as generic as possible when scraping, and saves the entire HTML contents of the pages. Then `parse.py` tries to parse that into the values I want.
 
 Primarily written to get historical achievement data, to plug into `my.games.steam` for [`HPI`](https://github.com/seanbreckenridge/HPI)

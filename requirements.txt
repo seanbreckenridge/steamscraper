@@ -1,5 +1,5 @@
 click
-selenium
+selenium>=4.10.0
 logzero
 bs4
 prettytable

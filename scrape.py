@@ -7,6 +7,7 @@ import click
 import bs4  # type: ignore[import]
 from logzero import logger  # type: ignore[import]
 from selenium import webdriver  # type: ignore[import]
+from selenium.webdriver.remote.webdriver import WebDriver  # type: ignore[import]
 from selenium.webdriver.support import expected_conditions as EC  # type: ignore[import]
 from selenium.webdriver.common.by import By  # type: ignore[import]
 from selenium.webdriver.support.ui import WebDriverWait  # type: ignore[import]
@@ -19,7 +20,7 @@ def is_achievement_url(url: str) -> bool:
     return "achievement" in query
 
 
-def scrape_game_data(username, driver):
+def scrape_game_data(username: str, driver: WebDriver):
     driver.get(GAMES_URL.format(username))
     sleep(5)
     WebDriverWait(driver, 30).until(
@@ -85,8 +86,11 @@ def login(username, driver):
     help="Location of the chromedriver",
 )
 def main(steam_username: str, to_file: str, chromedriver_path: Optional[str]) -> None:
-    cpath = "chromedriver" if chromedriver_path is None else chromedriver_path
-    driver = webdriver.Chrome(executable_path=cpath)
+    options = webdriver.ChromeOptions()
+    if chromedriver_path:
+        options.binary_location = chromedriver_path
+
+    driver = webdriver.Chrome(options=options)
 
     try:
         login(steam_username, driver)
