@@ -1,6 +1,6 @@
 import json
 from time import sleep
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from urllib.parse import urlparse
 
 import click
@@ -20,7 +20,9 @@ def is_achievement_url(url: str) -> bool:
     return "achievement" in query
 
 
-def scrape_game_data(username: str, driver: WebDriver):
+def scrape_game_data(
+    username: str, driver: WebDriver, request_all: bool
+) -> Dict[str, Any]:
     driver.get(GAMES_URL.format(username))
     sleep(5)
     WebDriverWait(driver, 30).until(
@@ -34,18 +36,45 @@ def scrape_game_data(username: str, driver: WebDriver):
     data["ach"] = {}
     page_soup = bs4.BeautifulSoup(driver.page_source, "html.parser")
 
-    achievement_urls = []
+    achievement_urls = set()
     # parse URLs for destination pages
     for u in page_soup.find_all("a"):
         url = u["href"]
-        if url.startswith("https://steamcommunity.com/id/{}/stats".format(username)):
+        if url.startswith(f"https://steamcommunity.com/id/{username}/stats"):
             # achievements
             if is_achievement_url(url):
-                achievement_urls.append(url)
+                if url in achievement_urls:
+                    continue
+                logger.debug(f"Adding achievement url: {url}")
+                achievement_urls.add(url)
+
+        if request_all:
+            # check if it is the app/based url
+            if url.startswith("https://store.steampowered.com/app"):
+                logger.debug(
+                    f"Found app url, trying to convert to achievements page: {url}"
+                )
+                game_parts: List[str] = url.split("/")
+                last = game_parts[-1]
+                if last.strip() and last.isnumeric():
+                    # convert to achievements page
+                    stats_url = f"https://steamcommunity.com/id/{username}/stats/{last}/?tab=achievements"
+
+                    if is_achievement_url(stats_url):
+                        if stats_url in achievement_urls:
+                            continue
+                        logger.debug(f"Adding converted achievement url: {stats_url}")
+                        achievement_urls.add(stats_url)
 
     for u in achievement_urls:
         driver.get(u)
         sleep(3)
+
+        # if we redirected to the main page, dont save it
+        if f"{username}/stats" not in driver.current_url:
+            logger.warning(f"Redirected to main page, skipping {u}")
+            continue
+
         try:
             WebDriverWait(driver, 5).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "achieveRow"))
@@ -53,11 +82,9 @@ def scrape_game_data(username: str, driver: WebDriver):
         except Exception as e:
             logger.exception(e)
             logger.warning(
-                "Couldn't find a 'achieveRow' item on {}, storing page anyways...".format(
-                    u
-                )
+                f"Couldn't find a 'achieveRow' item on {u}, storing page anyways..."
             )
-        logger.debug("storing page source for {}".format(u))
+        logger.debug(f"storing page source for {u}")
         data["ach"][u] = str(driver.page_source)
 
     return data
@@ -85,7 +112,18 @@ def login(username, driver):
     required=False,
     help="Location of the chromedriver",
 )
-def main(steam_username: str, to_file: str, chromedriver_path: Optional[str]) -> None:
+@click.option(
+    "--request-all",
+    is_flag=True,
+    help="Request all pages, not just ones with achievements. This is useful if you want data from all games, or the main page hasnt updated some achievements yet.",
+    default=False,
+)
+def main(
+    steam_username: str,
+    to_file: str,
+    chromedriver_path: Optional[str],
+    request_all: bool,
+) -> None:
     options = webdriver.ChromeOptions()
     if chromedriver_path:
         options.binary_location = chromedriver_path
@@ -94,7 +132,7 @@ def main(steam_username: str, to_file: str, chromedriver_path: Optional[str]) ->
 
     try:
         login(steam_username, driver)
-        game_data = scrape_game_data(steam_username, driver)
+        game_data = scrape_game_data(steam_username, driver, request_all)
     except Exception as e:
         logger.exception(e)
         return
