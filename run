@@ -12,3 +12,4 @@ python3 ./scrape.py "${STEAM_USERNAME:-$1}" --to-file ./data.json --request-all
 python3 ./parse.py --from-file ./data.json >./parsed.json
 TARGET="${HPIDATA:?No HPIDATA envvar set}/steam/$(epoch).json"
 mv -iv ./parsed.json "${TARGET}"
+find "$HPIDATA/steam" -name '*.json' -print0 | xargs -0 json-compress
