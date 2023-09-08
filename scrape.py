@@ -1,4 +1,5 @@
 import json
+import time
 from time import sleep
 from typing import Optional, List, Dict, Any
 from urllib.parse import urlparse
@@ -90,8 +91,22 @@ def scrape_game_data(
     return data
 
 
-def login(username, driver):
+def login(username, driver, steam_login, steam_password) -> None:
     driver.get(GAMES_URL.format(username))
+    if steam_login and steam_password:
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "input[type='text']"))
+        )
+        time.sleep(3)
+        steam_login_input = driver.find_element(
+            By.CSS_SELECTOR, """input[type="text"]"""
+        )
+        steam_login_input.send_keys(steam_login)
+        steam_password_input = driver.find_element(
+            By.CSS_SELECTOR, """input[type="password"]"""
+        )
+        steam_password_input.send_keys(steam_password)
+
     click.secho(
         "Sign in to steam, hit enter when youre done... > ", nl=False, fg="green"
     )
@@ -118,11 +133,27 @@ def login(username, driver):
     help="Request all pages, not just ones with achievements. This is useful if you want data from all games, or the main page hasnt updated some achievements yet.",
     default=False,
 )
+@click.option(
+    "--steam-login",
+    "steam_login",
+    required=False,
+    help="Steam login username",
+    envvar="STEAM_LOGIN",
+)
+@click.option(
+    "--steam-password",
+    "steam_password",
+    required=False,
+    help="Steam login password",
+    envvar="STEAM_PASSWORD",
+)
 def main(
     steam_username: str,
     to_file: str,
     chromedriver_path: Optional[str],
     request_all: bool,
+    steam_login: Optional[str],
+    steam_password: Optional[str],
 ) -> None:
     options = webdriver.ChromeOptions()
     if chromedriver_path:
@@ -131,7 +162,7 @@ def main(
     driver = webdriver.Chrome(options=options)
 
     try:
-        login(steam_username, driver)
+        login(steam_username, driver, steam_login, steam_password)
         game_data = scrape_game_data(steam_username, driver, request_all)
     except Exception as e:
         logger.exception(e)
