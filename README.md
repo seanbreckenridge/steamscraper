@@ -1,6 +1,6 @@
 # steamscraper
 
-Scrapes game/achievement data from steams website.
+Scrapes game/achievement data from streams website.
 
 Doesn't seem to be a simple way to download the data using the [GDPR site](https://help.steampowered.com/en/accountdata), this is a thrown together `selenium` implementation. Assumes you have [`selenium`](https://selenium-python.readthedocs.io/installation.html) setup/a `chromedriver` binary on your `$PATH` somewhere.
 
@@ -12,9 +12,9 @@ Saves:
 - hours on record
 - achievements
 
-Since 2FA is enabled on my account, this just asks you to manually log in after the chromedriver opens, it doesnt try to automatically log in. Prompts you to hit enter once you're logged in, which then starts the scraping process
+Since 2FA is enabled on my account, this just asks you to manually log in after the chromedriver opens, it doesn't try to automatically log in. Prompts you to hit enter once you're logged in, which then starts the scraping process
 
-**Make sure you have steam closed while running this**, otherwise the HTML changes since it conects to the steam client.
+**Make sure you have steam closed while running this**, otherwise the HTML changes since it connects to the steam client.
 
 To minimize errors , `scrape.py` is as generic as possible when scraping, and saves the entire HTML contents of the pages. Then `parse.py` tries to parse that into the values I want.
 

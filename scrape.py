@@ -108,7 +108,7 @@ def login(username, driver, steam_login, steam_password) -> None:
         steam_password_input.send_keys(steam_password)
 
     click.secho(
-        "Sign in to steam, hit enter when youre done... > ", nl=False, fg="green"
+        "Sign in to steam, hit enter when you're done... > ", nl=False, fg="green"
     )
     input()
 
@@ -130,7 +130,7 @@ def login(username, driver, steam_login, steam_password) -> None:
 @click.option(
     "--request-all",
     is_flag=True,
-    help="Request all pages, not just ones with achievements. This is useful if you want data from all games, or the main page hasnt updated some achievements yet.",
+    help="Request all pages, not just ones with achievements. This is useful if you want data from all games, or the main page hasn't updated some achievements yet.",
     default=False,
 )
 @click.option(

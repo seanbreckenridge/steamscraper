@@ -179,7 +179,7 @@ def achievement_page(url: str, page_contents: str) -> Tuple[Optional[int], List[
             achievements.extend(list(_tf2_achievement_page(asoup)))
             logger.debug(f"Parsed {len(achievements)} achievements from TF2...")
         else:
-            logger.warning(f"Couldnt parse {url}...")
+            logger.warning(f"Couldn't parse {url}...")
     return game_id, achievements
 
 
